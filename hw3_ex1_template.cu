@@ -5,6 +5,7 @@
  * - Implements atomic operations
  * - Saturates counts at 127
  * - Handles up to 4096 bins
+ * - Outputs distribution data
  */
 
 #include <stdio.h>
@@ -82,6 +83,23 @@ double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1.e-6);
+}
+
+/**
+ * 输出直方图数据到文件
+ */
+void outputHistogramData(const unsigned int* bins, int numBins, const char* filename) {
+    FILE *fp = fopen(filename, "w");
+    if (fp != NULL) {
+        // 写入所有bin的数据，包括计数为0的bin
+        for (int i = 0; i < numBins; i++) {
+            fprintf(fp, "%d %u\n", i, bins[i]);
+        }
+        fclose(fp);
+        printf("Histogram data has been written to %s\n", filename);
+    } else {
+        printf("Error: Could not open file %s for writing\n", filename);
+    }
 }
 
 /**
@@ -191,6 +209,9 @@ int main(int argc, char **argv) {
     } else {
         printf("Total %d mismatches found!\n", errors);
     }
+
+    // 输出直方图数据到文件
+    outputHistogramData(hostBins, NUM_BINS, "histogram_data.txt");
     
     // 释放GPU内存
     checkCudaErrors(cudaFree(deviceInput));
